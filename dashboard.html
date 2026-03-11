@@ -1,54 +1,15 @@
 <!DOCTYPE html>
+
 <html>
 <head>
 
 <title>Gallery Dashboard</title>
 
-<style>
+<link rel="stylesheet" href="style.css">
 
-body{
-font-family:Arial;
-background:#f2f2f2;
-text-align:center;
-}
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-.logout{
-position:absolute;
-top:20px;
-right:20px;
-background:black;
-color:white;
-border:none;
-padding:10px 15px;
-cursor:pointer;
-}
-
-.gallery{
-width:80%;
-margin:auto;
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:15px;
-margin-top:40px;
-}
-
-.gallery img, video{
-width:100%;
-height:200px;
-object-fit:cover;
-border-radius:6px;
-}
-
-button{
-padding:10px 20px;
-margin:10px;
-background:black;
-color:white;
-border:none;
-cursor:pointer;
-}
-
-</style>
+<script src="https://cdn.jsdelivr.net/npm/compressorjs@1.2.1/dist/compressor.min.js"></script>
 
 </head>
 
@@ -58,104 +19,26 @@ cursor:pointer;
 
 <h1>OUR GALLERY</h1>
 
-<input type="file" id="imageUpload" hidden accept="image/*">
-<input type="file" id="videoUpload" hidden accept="video/*">
+<div class="upload-area" id="dropArea">
+Drag & Drop Files Here
+</div>
 
-<button onclick="imageUpload.click()">ADD IMAGES</button>
-<button onclick="videoUpload.click()">ADD VIDEOS</button>
+<input type="file" id="fileInput" hidden>
+
+<button onclick="document.getElementById('fileInput').click()">UPLOAD FILE</button>
+
+<div class="progress">
+<div id="progressBar"></div>
+</div>
 
 <div class="gallery" id="gallery"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<div class="pagination">
+<button onclick="prevPage()">Prev</button>
+<button onclick="nextPage()">Next</button>
+</div>
 
-<script>
-
-const SUPABASE_URL = "YOUR_URL"
-const SUPABASE_KEY = "YOUR_KEY"
-
-const supabase = supabase.createClient(SUPABASE_URL,SUPABASE_KEY)
-
-const imageUpload = document.getElementById("imageUpload")
-const videoUpload = document.getElementById("videoUpload")
-
-imageUpload.addEventListener("change",uploadImage)
-videoUpload.addEventListener("change",uploadVideo)
-
-async function uploadImage(e){
-
-const file = e.target.files[0]
-
-await supabase.storage
-.from("gallery-files")
-.upload("images/"+file.name,file)
-
-const { data } = supabase.storage
-.from("gallery-files")
-.getPublicUrl("images/"+file.name)
-
-await supabase
-.from("gallery")
-.insert([{url:data.publicUrl,type:"image"}])
-
-loadGallery()
-
-}
-
-async function uploadVideo(e){
-
-const file = e.target.files[0]
-
-await supabase.storage
-.from("gallery-files")
-.upload("videos/"+file.name,file)
-
-const { data } = supabase.storage
-.from("gallery-files")
-.getPublicUrl("videos/"+file.name)
-
-await supabase
-.from("gallery")
-.insert([{url:data.publicUrl,type:"video"}])
-
-loadGallery()
-
-}
-
-async function loadGallery(){
-
-const { data } = await supabase
-.from("gallery")
-.select("*")
-
-const gallery = document.getElementById("gallery")
-
-gallery.innerHTML=""
-
-data.forEach(item=>{
-
-if(item.type==="image"){
-
-gallery.innerHTML += `<img src="${item.url}">`
-
-}else{
-
-gallery.innerHTML += `<video controls src="${item.url}"></video>`
-
-}
-
-})
-
-}
-
-loadGallery()
-
-function logout(){
-
-alert("Logged out")
-
-}
-
-</script>
+<script src="script.js"></script>
 
 </body>
 </html>
