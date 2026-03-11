@@ -1,44 +1,37 @@
 <!DOCTYPE html>
-
 <html>
 <head>
-
 <title>Gallery Dashboard</title>
-
 <link rel="stylesheet" href="style.css">
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/compressorjs@1.2.1/dist/compressor.min.js"></script>
-
 </head>
-
 <body>
 
-<button class="logout" onclick="logout()">Logout</button>
-
-<h1>OUR GALLERY</h1>
-
-<div class="upload-area" id="dropArea">
-Drag & Drop Files Here
+<div class="top-bar glass">
+  <h1>Gallery</h1>
+  <button class="logout" onclick="logout()">Logout</button>
 </div>
 
-<input type="file" id="fileInput" hidden>
-
-<button onclick="document.getElementById('fileInput').click()">UPLOAD FILE</button>
+<div class="upload-container">
+  <div class="upload-area glass" id="dropArea">
+    Drag & Drop Files Here
+  </div>
+  <input type="file" id="fileInput" hidden>
+  <button class="glass-btn" onclick="document.getElementById('fileInput').click()">UPLOAD FILE</button>
+</div>
 
 <div class="progress">
-<div id="progressBar"></div>
+  <div id="progressBar"></div>
 </div>
 
 <div class="gallery" id="gallery"></div>
 
-<div class="pagination">
-<button onclick="prevPage()">Prev</button>
-<button onclick="nextPage()">Next</button>
+<div class="pagination glass">
+  <button onclick="prevPage()" id="prevBtn">Prev</button>
+  <button onclick="nextPage()" id="nextBtn">Next</button>
 </div>
 
 <script src="script.js"></script>
-
 </body>
 </html>
