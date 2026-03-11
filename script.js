@@ -1,68 +1,124 @@
-const SUPABASE_URL="YOUR_SUPABASE_URL"
-const SUPABASE_KEY="YOUR_SUPABASE_ANON_KEY"
+/* =========================
+CONFIG
+========================= */
 
-const client = supabase.createClient(SUPABASE_URL,SUPABASE_KEY)
+const SUPABASE_URL = "YOUR_SUPABASE_URL"
+const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY"
 
-let page=0
-const limit=8
+const ADMIN_USER = "noeladianes"
+const ADMIN_PASS = "jepoyduday111"
 
-async function login(){
+/* =========================
+CREATE SUPABASE CLIENT
+========================= */
 
-const email=document.getElementById("email").value
-const password=document.getElementById("password").value
+const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
 
-const {error}=await client.auth.signInWithPassword({
-email:email,
-password:password
-})
+/* =========================
+LOGIN SYSTEM
+========================= */
 
-if(!error){
-window.location="dashboard.html"
+function login(){
+
+const user = document.getElementById("username").value
+const pass = document.getElementById("password").value
+
+if(user === ADMIN_USER && pass === ADMIN_PASS){
+
+localStorage.setItem("logged","true")
+
+window.location = "dashboard.html"
+
 }else{
-alert("Login failed")
+
+alert("Wrong user or password")
+
+}
+
+}
+
+/* =========================
+PROTECT DASHBOARD
+========================= */
+
+if(window.location.pathname.includes("dashboard.html")){
+
+if(localStorage.getItem("logged") !== "true"){
+
+window.location = "index.html"
+
 }
 
 }
 
-async function logout(){
+/* =========================
+LOGOUT
+========================= */
 
-await client.auth.signOut()
-window.location="index.html"
+function logout(){
+
+localStorage.removeItem("logged")
+
+window.location = "index.html"
 
 }
+
+/* =========================
+PAGE SETTINGS
+========================= */
+
+let page = 0
+const limit = 8
+
+/* =========================
+PAGE LOAD
+========================= */
 
 document.addEventListener("DOMContentLoaded",()=>{
 
-const input=document.getElementById("fileInput")
+const input = document.getElementById("fileInput")
 
 if(input){
 
 input.addEventListener("change",(e)=>{
+
 uploadFile(e.target.files[0])
+
 })
 
 }
 
-const dropArea=document.getElementById("dropArea")
+const dropArea = document.getElementById("dropArea")
 
 if(dropArea){
 
 dropArea.addEventListener("dragover",(e)=>{
+
 e.preventDefault()
+
 })
 
 dropArea.addEventListener("drop",(e)=>{
+
 e.preventDefault()
+
 uploadFile(e.dataTransfer.files[0])
+
 })
 
 }
 
 if(document.getElementById("gallery")){
+
 loadGallery()
+
 }
 
 })
+
+/* =========================
+IMAGE COMPRESSION
+========================= */
 
 function compressImage(file){
 
@@ -79,25 +135,31 @@ resolve(result)
 
 }
 
+/* =========================
+UPLOAD FILE
+========================= */
+
 async function uploadFile(file){
 
-const progress=document.getElementById("progressBar")
+const progress = document.getElementById("progressBar")
 
-progress.style.width="10%"
+progress.style.width = "10%"
 
 if(file.type.includes("image")){
-file=await compressImage(file)
+
+file = await compressImage(file)
+
 }
 
-const filePath="files/"+Date.now()+"-"+file.name
+const filePath = "files/" + Date.now() + "-" + file.name
 
 await client.storage
 .from("gallery-files")
 .upload(filePath,file)
 
-progress.style.width="70%"
+progress.style.width = "70%"
 
-const {data}=client.storage
+const {data} = client.storage
 .from("gallery-files")
 .getPublicUrl(filePath)
 
@@ -108,50 +170,61 @@ url:data.publicUrl,
 type:file.type
 })
 
-progress.style.width="100%"
+progress.style.width = "100%"
 
 loadGallery()
 
-setTimeout(()=>progress.style.width="0%",1000)
+setTimeout(()=>{
+progress.style.width="0%"
+},1000)
 
 }
 
+/* =========================
+LOAD GALLERY
+========================= */
+
 async function loadGallery(){
 
-const {data}=await client
+const {data} = await client
 .from("gallery")
 .select("*")
 .order("created_at",{ascending:false})
 .range(page*limit,page*limit+limit)
 
-const gallery=document.getElementById("gallery")
+const gallery = document.getElementById("gallery")
 
-gallery.innerHTML=""
+gallery.innerHTML = ""
 
 data.forEach(item=>{
 
-let html=""
+let html = ""
 
 if(item.type.includes("image")){
 
-html=`<img src="${item.url}">`
+html = `<img src="${item.url}">`
 
 }else{
 
-html=`<video controls src="${item.url}"></video>`
+html = `<video controls src="${item.url}"></video>`
 
 }
 
-html+=`<button onclick="deleteFile(${item.id})">Delete</button>`
+html += `<button onclick="deleteFile(${item.id})">Delete</button>`
 
-const div=document.createElement("div")
-div.innerHTML=html
+const div = document.createElement("div")
+
+div.innerHTML = html
 
 gallery.appendChild(div)
 
 })
 
 }
+
+/* =========================
+DELETE FILE
+========================= */
 
 async function deleteFile(id){
 
@@ -164,16 +237,46 @@ loadGallery()
 
 }
 
+// PAGINATION
 function nextPage(){
-page++
-loadGallery()
+  page++;
+  loadGallery();
 }
 
 function prevPage(){
-
-if(page>0){
-page--
-loadGallery()
+  if(page > 0){
+    page--;
+    loadGallery();
+  }
 }
 
-}
+// Drag & Drop + File Input
+document.addEventListener("DOMContentLoaded", () => {
+
+  const input = document.getElementById("fileInput");
+  if(input){
+    input.addEventListener("change", (e) => {
+      uploadFile(e.target.files[0]);
+    });
+  }
+
+  const dropArea = document.getElementById("dropArea");
+  if(dropArea){
+    dropArea.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropArea.style.borderColor = "#60a5fa"; // Highlight on hover
+    });
+
+    dropArea.addEventListener("dragleave", (e) => {
+      e.preventDefault();
+      dropArea.style.borderColor = "#374151"; // Reset border
+    });
+
+    dropArea.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropArea.style.borderColor = "#374151";
+      uploadFile(e.dataTransfer.files[0]);
+    });
+  }
+
+});
