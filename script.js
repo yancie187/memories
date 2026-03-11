@@ -2,8 +2,8 @@
 CONFIG
 ========================= */
 
-const SUPABASE_URL = "YOUR_SUPABASE_URL"
-const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY"
+const SUPABASE_URL = "https://rziospcthcuehwgkldjy.supabase.co"
+const SUPABASE_KEY = "sb_publishable_EQYC74VgfkY4iV65VVackw_rynHO9Vx"
 
 const ADMIN_USER = "noeladianes"
 const ADMIN_PASS = "jepoyduday111"
@@ -135,50 +135,80 @@ resolve(result)
 
 }
 
-/* =========================
-UPLOAD FILE
-========================= */
-
+// Upload File function
 async function uploadFile(file){
+  if(!file) return;
 
-const progress = document.getElementById("progressBar")
+  const progress = document.getElementById("progressBar");
+  progress.style.width = "10%";
 
-progress.style.width = "10%"
+  // Compress image if needed
+  if(file.type.includes("image")){
+    file = await new Promise(resolve=>{
+      new Compressor(file,{
+        quality:0.6,
+        success(result){ resolve(result); }
+      })
+    });
+  }
 
-if(file.type.includes("image")){
+  // Create unique file path
+  const filePath = "files/" + Date.now() + "-" + file.name;
 
-file = await compressImage(file)
+  // Upload to Supabase Storage
+  const { error: uploadError } = await client.storage
+    .from("gallery-files")
+    .upload(filePath, file);
 
+  if(uploadError){
+    alert("Upload failed: " + uploadError.message);
+    progress.style.width = "0%";
+    return;
+  }
+
+  progress.style.width = "70%";
+
+  // Get public URL
+  const { data } = client.storage
+    .from("gallery-files")
+    .getPublicUrl(filePath);
+
+  // Save URL in Supabase table
+  const { error: dbError } = await client
+    .from("gallery")
+    .insert([{ url: data.publicUrl, type: file.type }]);
+
+  if(dbError){
+    alert("Database insert failed: " + dbError.message);
+    progress.style.width = "0%";
+    return;
+  }
+
+  progress.style.width = "100%";
+  setTimeout(()=>{ progress.style.width = "0%"; }, 1000);
+
+  loadGallery(); // Refresh gallery
 }
 
-const filePath = "files/" + Date.now() + "-" + file.name
+// File input listener
+document.getElementById("fileInput").addEventListener("change", (e)=>{
+  uploadFile(e.target.files[0]);
+});
 
-await client.storage
-.from("gallery-files")
-.upload(filePath,file)
-
-progress.style.width = "70%"
-
-const {data} = client.storage
-.from("gallery-files")
-.getPublicUrl(filePath)
-
-await client
-.from("gallery")
-.insert({
-url:data.publicUrl,
-type:file.type
-})
-
-progress.style.width = "100%"
-
-loadGallery()
-
-setTimeout(()=>{
-progress.style.width="0%"
-},1000)
-
-}
+// Drag & Drop
+const dropArea = document.getElementById("dropArea");
+dropArea.addEventListener("dragover", (e)=>{
+  e.preventDefault();
+  dropArea.style.borderColor = "#60a5fa";
+});
+dropArea.addEventListener("dragleave", (e)=>{
+  dropArea.style.borderColor = "#374151";
+});
+dropArea.addEventListener("drop", (e)=>{
+  e.preventDefault();
+  dropArea.style.borderColor = "#374151";
+  uploadFile(e.dataTransfer.files[0]);
+});
 
 /* =========================
 LOAD GALLERY
@@ -250,33 +280,7 @@ function prevPage(){
   }
 }
 
-// Drag & Drop + File Input
-document.addEventListener("DOMContentLoaded", () => {
-
-  const input = document.getElementById("fileInput");
-  if(input){
-    input.addEventListener("change", (e) => {
-      uploadFile(e.target.files[0]);
-    });
-  }
-
-  const dropArea = document.getElementById("dropArea");
-  if(dropArea){
-    dropArea.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      dropArea.style.borderColor = "#60a5fa"; // Highlight on hover
-    });
-
-    dropArea.addEventListener("dragleave", (e) => {
-      e.preventDefault();
-      dropArea.style.borderColor = "#374151"; // Reset border
-    });
-
-    dropArea.addEventListener("drop", (e) => {
-      e.preventDefault();
-      dropArea.style.borderColor = "#374151";
-      uploadFile(e.dataTransfer.files[0]);
-    });
-  }
-
+// File input listener
+document.getElementById("fileInput").addEventListener("change", (e)=>{
+  uploadFile(e.target.files[0]);
 });
